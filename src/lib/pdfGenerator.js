@@ -21,6 +21,22 @@ function money(n) {
   return num.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 }
 
+function dataUrlToPngBytes(dataUrl) {
+  if (!dataUrl?.startsWith('data:image/png;base64,')) return null
+
+  try {
+    const base64 = dataUrl.replace('data:image/png;base64,', '')
+    const binaryString = atob(base64)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i += 1) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    return bytes
+  } catch {
+    return null
+  }
+}
+
 /**
  * Wraps text to fit within maxWidth, returns array of lines.
  */
@@ -253,7 +269,10 @@ export async function generateLeasePdf(data) {
 
     if (signatureDataUrl) {
       try {
-        const image = await doc.embedPng(signatureDataUrl)
+        const pngBytes = dataUrlToPngBytes(signatureDataUrl)
+        if (!pngBytes) throw new Error('Invalid signature data URL')
+
+        const image = await doc.embedPng(pngBytes)
         const maxWidth = sigBoxWidth - 12
         const maxHeight = sigBoxHeight - 12
         const scale = Math.min(maxWidth / image.width, maxHeight / image.height, 1)
@@ -262,8 +281,9 @@ export async function generateLeasePdf(data) {
         const imgX = sigBoxX + 6 + (maxWidth - imgWidth) / 2
         const imgY = top - 10 - imgHeight - (sigBoxHeight - imgHeight) / 2
         c.page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight })
-      } catch {
-        c.page.drawText('Invalid signature image', { x: sigBoxX + 6, y: top - 40, size: 8, font: regular, color: STONE })
+      } catch (err) {
+        console.error('Signature embed failed:', err)
+        c.page.drawText('Invalid signature image', { x: sigBoxX + 6, y: top - 40, size: 8, font: regular, color: rgb(1, 0, 0) })
       }
     } else {
       c.page.drawText('X', { x: sigBoxX + 4, y: top - 30, size: 10, font: italic, color: STONE })

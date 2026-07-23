@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { generateLeasePdf, downloadPdf } from '../lib/pdfGenerator'
 
 const UTILITY_OPTIONS = ['Electricity', 'Water', 'Internet access', 'Washing machine', 'Waste disposal', 'Gas']
@@ -51,10 +51,18 @@ function formatDatePreview(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-function SignaturePad({ label, value, onChange, hint }) {
+const SignaturePad = forwardRef(function SignaturePad({ label, value, onChange, hint }, ref) {
   const canvasRef = useRef(null)
   const drawing = useRef(false)
   const lastPoint = useRef([0, 0])
+
+  useImperativeHandle(ref, () => ({
+    getDataUrl() {
+      const canvas = canvasRef.current
+      if (!canvas) return ''
+      return canvas.toDataURL('image/png')
+    },
+  }))
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -147,11 +155,15 @@ function SignaturePad({ label, value, onChange, hint }) {
       </button>
     </Field>
   )
-}
+})
 
 export default function LeaseForm() {
   const [data, setData] = useState(DEFAULTS)
   const [generating, setGenerating] = useState(false)
+
+  const landlordSigRef = useRef(null)
+  const lawyerSigRef = useRef(null)
+  const tenantSigRef = useRef(null)
 
   function set(key, value) {
     setData((d) => ({ ...d, [key]: value }))
@@ -173,8 +185,18 @@ export default function LeaseForm() {
     e.preventDefault()
     setGenerating(true)
     try {
+      const landlordSignature =
+        landlordSigRef.current?.getDataUrl() || data.landlordSignature
+      const lawyerSignature =
+        lawyerSigRef.current?.getDataUrl() || data.lawyerSignature
+      const tenantSignature =
+        tenantSigRef.current?.getDataUrl() || data.tenantSignature
+
       const payload = {
         ...data,
+        landlordSignature,
+        lawyerSignature,
+        tenantSignature,
         petPolicy: data.petsAllowed
           ? data.petPolicy || 'Pets are permitted, subject to Landlord\'s standard pet policy.'
           : 'Pets are not permitted on the Premises.',
@@ -390,6 +412,7 @@ export default function LeaseForm() {
               />
             </Field>
             <SignaturePad
+              ref={landlordSigRef}
               label="Landlord signature"
               value={data.landlordSignature}
               onChange={(value) => set('landlordSignature', value)}
@@ -404,6 +427,7 @@ export default function LeaseForm() {
               />
             </Field>
             <SignaturePad
+              ref={lawyerSigRef}
               label="Lawyer signature"
               value={data.lawyerSignature}
               onChange={(value) => set('lawyerSignature', value)}
@@ -418,6 +442,7 @@ export default function LeaseForm() {
               />
             </Field>
             <SignaturePad
+              ref={tenantSigRef}
               label="Tenant signature"
               value={data.tenantSignature}
               onChange={(value) => set('tenantSignature', value)}
