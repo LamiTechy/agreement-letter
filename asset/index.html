@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rental Agreement Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+  .container { max-width: 1000px; margin: 0 auto; }
+  h1 { text-align: center; color: #1a1a2e; margin-bottom: 24px; font-size: 28px; }
+
+  .form-section { background: white; border-radius: 12px; padding: 28px 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px; }
+  .form-section h2 { color: #1a1a2e; font-size: 18px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e0e0e0; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 4px; }
+  input, textarea { padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; transition: border 0.2s; }
+  input:focus, textarea:focus { border-color: #4a6cf7; box-shadow: 0 0 0 3px rgba(74,108,247,0.15); }
+  textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+  .fixed-info { background: #f8f9ff; border: 1px solid #d0d5f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .fixed-info label { color: #4a6cf7; }
+  .fixed-info .value { font-size: 14px; color: #333; margin-top: 2px; }
+
+  .btn-row { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+  button { padding: 12px 32px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-generate { background: #4a6cf7; color: white; }
+  .btn-generate:hover { background: #3b5de7; transform: translateY(-1px); }
+  .btn-print { background: #28a745; color: white; }
+  .btn-print:hover { background: #218838; transform: translateY(-1px); }
+  .btn-reset { background: #6c757d; color: white; }
+  .btn-reset:hover { background: #5a6268; }
+
+  .agreement-output { background: white; border-radius: 12px; padding: 40px 48px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
+  .agreement-output.show { display: block; }
+  .agreement-output h2 { text-align: center; font-size: 22px; margin-bottom: 24px; }
+  .agreement-content { line-height: 1.7; font-size: 14px; color: #222; }
+  .agreement-content p { margin-bottom: 12px; text-align: justify; }
+  .agreement-content .section-title { font-weight: 700; margin-top: 16px; margin-bottom: 6px; }
+  .agreement-content .signature-block { margin-top: 28px; }
+  .agreement-content .signature-line { margin-top: 20px; border-top: 1px solid #999; width: 260px; padding-top: 4px; font-size: 13px; color: #555; }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .form-section, .btn-row, h1 { display: none !important; }
+    .agreement-output { box-shadow: none; padding: 20px 30px; display: block !important; }
+    .agreement-content { font-size: 13px; }
+  }
+  @media (max-width: 700px) {
+    .form-row { grid-template-columns: 1fr; }
+    .form-section, .agreement-output { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Rental Agreement Generator</h1>
+
+  <div class="form-section">
+    <h2>Company Information (Fixed)</h2>
+    <div class="fixed-info">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Landlord / Company Name</label>
+          <div class="value">Advance Property Management</div>
+        </div>
+        <div class="form-group">
+          <label>Company Address</label>
+          <div class="value">8555 Lyra Dr, Columbus, OH 43240</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Agreement Details</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tenant Name *</label>
+        <input type="text" id="tenantName" placeholder="e.g. Nathan Durham">
+      </div>
+      <div class="form-group">
+        <label>Tenant Address</label>
+        <input type="text" id="tenantAddress" placeholder="e.g. 7749 knue rd Apt a">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Premises Address (Property Being Rented) *</label>
+        <input type="text" id="premisesAddress" placeholder="e.g. 318 N Harrison St, Greenfield, IN 46140">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Monthly Rent Amount ($) *</label>
+        <input type="text" id="rentAmount" placeholder="e.g. 1500">
+      </div>
+      <div class="form-group">
+        <label>Security Deposit ($) *</label>
+        <input type="text" id="securityDeposit" placeholder="e.g. 1500+500+70">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Date *</label>
+        <input type="text" id="startDate" placeholder="e.g. 28-07-2026">
+      </div>
+      <div class="form-group">
+        <label>Number of Keys</label>
+        <input type="text" id="numKeys" value="2" placeholder="e.g. 2">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Utilities Included (comma separated)</label>
+        <input type="text" id="utilities" value="Electricity, water, internet access, washing machine, waste disposal, gas" placeholder="e.g. Electricity, water, gas">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Additional Terms / Notes (optional)</label>
+        <textarea id="additionalTerms" placeholder="Any additional terms to include..."></textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-generate" onclick="generateAgreement()">Generate Agreement</button>
+      <button class="btn-reset" onclick="resetForm()">Reset</button>
+    </div>
+  </div>
+
+  <div class="agreement-output" id="agreementOutput">
+    <h2>RENTAL AGREEMENT</h2>
+    <div class="agreement-content" id="agreementContent"></div>
+    <div class="btn-row" style="margin-top: 24px;">
+      <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+      <button class="btn-generate" onclick="regenerate()">Regenerate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function getVal(id) { return document.getElementById(id).value.trim(); }
+
+function generateAgreement() {
+  const tenant = getVal('tenantName');
+  const tenantAddr = getVal('tenantAddress');
+  const premises = getVal('premisesAddress');
+  const rent = getVal('rentAmount');
+  const deposit = getVal('securityDeposit');
+  const startDate = getVal('startDate');
+  const numKeys = getVal('numKeys') || '2';
+  const utilities = getVal('utilities');
+  const additional = getVal('additionalTerms');
+
+  if (!tenant || !premises || !rent || !deposit || !startDate) {
+    alert('Please fill in all required fields (marked with *).');
+    return;
+  }
+
+  const companyName = 'Advance Property Management';
+  const companyAddr = '8555 Lyra Dr, Columbus, OH 43240';
+
+  const content = `
+    <p>This Rental Agreement ("Lease") is entered by and between</p>
+    <p><strong>${companyName}</strong><br>${companyAddr}</p>
+    <p><strong>${tenant}</strong>${tenantAddr ? '<br>' + tenantAddr : ''} ("Tenant")</p>
+    <p>Landlord and Tenant may collectively be referred to as the "Parties". This Lease creates joint and several liabilities in the case of multiple Tenants. The Parties agree as follows:</p>
+
+    <p class="section-title">PREMISES:</p>
+    <p>Landlord hereby leases the three bedroom located at <strong>${premises}</strong>.</p>
+
+    <p class="section-title">LEASE PAYMENTS:</p>
+    <p>Payment should be made through CHIME equivalent to the lease amount. Tenant agrees to pay to Landlord as rent for the house the amount of <strong>$${rent}</strong> monthly, includes the payment of utilities such as ${utilities}.</p>
+
+    <p class="section-title">TERM:</p>
+    <p>The term of this agreement is periodic tenancy commencing at 12.00 Noon on <strong>${startDate}</strong> and shall be continued on a month to month basis, unless the Landlord or Tenant agrees to terminate or extend the tenancy.</p>
+
+    <p class="section-title">SECURITY DEPOSIT:</p>
+    <p>At the signing of this Lease, Tenant shall deposit with Landlord, in trust, a Month security deposit of <strong>$${deposit}</strong> for month to month rent with renewal option, as security for the performance by Tenant of the terms under this Lease and for any damages caused by Tenant, Tenant's family, agents and visitors to the Premises during the term of this Lease. Landlord may use part or all of the security deposit to repair any damage to the Premises caused by Tenant, Tenant's family, agents and visitors to the Premises.</p>
+    <p>However, Landlord is not just limited to the security deposit amount and Tenant remains liable for any balance. Tenant shall not apply or deduct any portion of any security deposit from the last or any month's rent. Tenant shall not use or apply any such security deposit at any time in lieu of payment of rent.</p>
+    <p>If Tenant breaches any terms or conditions of this Lease, Tenant shall forfeit any deposit, as permitted by law. The security deposit is refundable at the end of this lease contract.</p>
+
+    <p class="section-title">QUIET ENJOYMENT:</p>
+    <p>Tenant shall be entitled to quiet enjoyment of the apartment, and Landlord will not interfere with that right, as long as Tenant pays the rent in a timely manner and performs all other obligations under this Lease.</p>
+
+    <p class="section-title">USE OF PREMISES:</p>
+    <p>Tenant shall only use the house as a residence. The house shall not be used to carry on any type of business or trade, without prior written consent of the Landlord. Tenant will comply with all laws, rules, ordinances, statutes and orders regarding the use of the apartment.</p>
+
+    <p class="section-title">PETS:</p>
+    <p>Pets are allowed.</p>
+
+    <p class="section-title">DAMAGE TO PREMISES:</p>
+    <p>If the house or part of the house are damaged or destroyed by fire or other casualty not due to Tenant's negligence, the rent will be abated during the time that the house is uninhabitable. If Landlord decides not to repair or rebuild the house, then this Lease shall terminate and the rent shall be prorated up to the time of the damage. Any unearned rent paid in advance shall be refunded to Tenant.</p>
+
+    <p class="section-title">MAINTENANCE AND REPAIR:</p>
+    <p>Tenant will, at Tenant's sole expense, keep and maintain the house in good, clean and sanitary condition and repair during the term of this Lease and any renewal thereof. Tenant shall be responsible to make all repairs to the house, fixtures, appliances and equipment therein that may have been damaged by Tenant's misuse, waste, or neglect, or that of the Tenant's family, agent, or visitor. Tenant agrees that no painting will be done on or about the house without the prior written consent of Landlord. Tenant shall promptly notify Landlord of any damage, defect or destruction of the house, or in the event of the failure of any of the appliances or equipment. Landlord will use its best efforts to repair or replace any such damaged or defective area, appliance or equipment.</p>
+
+    <p class="section-title">SECURITY:</p>
+    <p>Tenant understands that Landlord does not provide any security alarm system or other security for Tenant or the Premises. In the event any alarm system is provided, Tenant understands that such alarm system is not warranted to be complete in all respects or to be sufficient to protect Tenant or the Premises. Tenant releases Landlord from any loss, damage, claim or injury resulting from the failure of any alarm system, security or from the lack of any alarm system or security.</p>
+
+    <p class="section-title">GOVERNING LAW:</p>
+    <p>This Lease shall be governed by and construed in accordance with the laws of United States.</p>
+
+    <p class="section-title">NOTICE:</p>
+    <p>Any notice required or otherwise given pursuant to this Lease shall be in writing and mailed certified return receipt requested, postage prepaid, or delivered by overnight delivery service, if to Tenant, at the Premise and if to Landlord, at the address for payment of rent. Either party may change such addresses from time to time by providing notice as set forth above.</p>
+
+    <p class="section-title">CUMULATIVE RIGHTS:</p>
+    <p>Landlord and Tenant's rights under this Lease are cumulative, and shall not be construed as exclusive of each other unless otherwise required by law.</p>
+
+    <p class="section-title">KEYS:</p>
+    <p>Tenant will be given ${numKeys} key(s) to the Premises and one mailbox key(s). Tenant shall be charged $30 if all keys are not returned to Landlord following termination of the Lease.</p>
+
+    <p class="section-title">Full Disclosure</p>
+    <p>The Tenant signing this Rental Contract hereby state that all questions about this Rental Agreement have been answered, that they fully understand all the provisions of the agreement and the obligations and responsibilities of each party, as spelled out herein. They further state that they agree to fulfill their obligations in every respect or suffer the full legal and financial consequences of their actions or lack of action in violation of this agreement.</p>
+
+    ${additional ? '<p class="section-title">ADDITIONAL TERMS:</p><p>' + additional + '</p>' : ''}
+
+    <div class="signature-block">
+      <p><strong>Signature:</strong></p>
+      <div class="signature-line">Landlord: ${companyName}</div>
+      <div class="signature-line">Lawyer: Esq. John Frederick</div>
+      <div class="signature-line">Tenant: ${tenant}</div>
+    </div>
+  `;
+
+  document.getElementById('agreementContent').innerHTML = content;
+  document.getElementById('agreementOutput').classList.add('show');
+  document.getElementById('agreementOutput').scrollIntoView({ behavior: 'smooth' });
+}
+
+function regenerate() {
+  document.getElementById('agreementOutput').classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  document.getElementById('agreementOutput').classList.remove('show');
+  document.querySelectorAll('input, textarea').forEach(el => {
+    if (el.type !== 'text' && el.tagName !== 'TEXTAREA') return;
+    if (el.id === 'numKeys') { el.value = '2'; return; }
+    if (el.id === 'utilities') { el.value = 'Electricity, water, internet access, washing machine, waste disposal, gas'; return; }
+    el.value = '';
+  });
+}
+</script>
+</body>
+</html>
